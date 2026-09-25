@@ -2,6 +2,8 @@
 
 Run **Trackmania (2020)** on Apple Silicon Macs with one script. Free, no CrossOver, no Whisky, no GUI wrapper.
 
+![Trackmania running on an M1 Pro MacBook with trackmania-mac](docs/screenshot.jpg)
+
 ```sh
 git clone https://github.com/Pab450/trackmania-mac.git
 cd trackmania-mac
