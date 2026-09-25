@@ -1,0 +1,6 @@
+# Runtime, Wine prefix and game files created by ./tm
+/data/
+__pycache__/
+.DS_Store
+# Local agent configuration
+/.claude/

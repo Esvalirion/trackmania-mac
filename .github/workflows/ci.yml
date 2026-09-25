@@ -1,0 +1,15 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint tm
+        run: shellcheck tm
+      - name: Test patch_libcef.py
+        run: python3 -m unittest discover -v tests
