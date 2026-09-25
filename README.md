@@ -29,6 +29,7 @@ Tested on an M1 Pro running macOS 26.6 (Tahoe), September 2026.
 | `./tm kill` | Stops every Wine process |
 | `./tm logs` | Follows the Wine log |
 | `./tm wine <args>` | Runs a command in the prefix, e.g. `./tm wine winecfg` |
+| `./tm openplanet <installer.exe>` | Installs [Openplanet](#openplanet) |
 | `./tm reset` | Deletes the prefix (Ubisoft Connect and the game), keeps the runtime |
 
 Launch the game with `./tm run`, not with the **Play** button in Ubisoft Connect. The button can hang on "Preparing to launch your game" under Wine.
@@ -48,6 +49,18 @@ Launch the game with `./tm run`, not with the **Play** button in Ubisoft Connect
 ```
 
 The game inherits the renderer from Ubisoft Connect, so always run `./tm kill` before switching.
+
+### Openplanet
+
+[Openplanet](https://openplanet.dev) (the Trackmania scripting platform) works. Download the installer, then:
+
+```sh
+brew install sevenzip
+./tm openplanet ~/Downloads/OpenplanetNext_x.y.z.exe
+./tm kill && ./tm run    # press F3 in game
+```
+
+The official installer refuses the game path under Wine, so `tm` extracts its files into the game directory instead. The installer does nothing more than copy them.
 
 ### Files
 
@@ -73,6 +86,7 @@ Other settings, all in [`tm`](tm):
 - `WINE_SIMULATE_WRITECOPY=1`: a CrossOver compatibility switch for Chromium's memory-protection checks.
 - `WINEMSYNC=1`: Mach-semaphore synchronization, recommended for DXMT.
 - Wine's `renderer=gl`: stops Ubisoft Connect from crashing during GPU detection.
+- `WINEDLLOVERRIDES=dinput8=n,b`: loads Openplanet's `dinput8.dll` from the game directory, or Wine's own when Openplanet is absent.
 - Crash dialogs are disabled: crashes are logged instead of opening a debugger window.
 
 Every download is pinned and verified by SHA-256, except the Ubisoft Connect installer. Ubisoft serves only the latest version, and the client updates itself anyway.

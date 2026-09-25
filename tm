@@ -23,6 +23,8 @@ export WINEDEBUG="${WINEDEBUG:--all}"
 export WINEMSYNC=1
 export WINE_SIMULATE_WRITECOPY=1                            # CEF expects PAGE_READWRITE, not PAGE_WRITECOPY
 export DYLD_FALLBACK_LIBRARY_PATH="$RUNTIME:/usr/lib"       # the engine resolves its dylibs via @rpath
+# Openplanet loads through a dinput8.dll next to the game. Falls back to Wine's own when absent.
+export WINEDLLOVERRIDES="${WINEDLLOVERRIDES:+$WINEDLLOVERRIDES;}dinput8=n,b"
 
 UBI_DIR="$WINEPREFIX/drive_c/Program Files (x86)/Ubisoft/Ubisoft Game Launcher"
 UBI_EXE="$UBI_DIR/UbisoftConnect.exe"
@@ -129,6 +131,22 @@ cmd_run() {
   cd "$UBI_DIR" && exec "$WINE" UbisoftConnect.exe >>"$LOG" 2>&1
 }
 
+# cmd_openplanet <installer.exe>
+# The NSIS installer rejects the game path under Wine ("not where Trackmania is installed"),
+# so extract its payload into the game directory instead. That is all the installer copies.
+cmd_openplanet() {
+  local installer="${1:-}"
+  [[ -f "$installer" ]] || die "usage: ./tm openplanet <OpenplanetNext_x.y.z.exe> (download it from openplanet.dev)"
+  [[ -f "$GAME_EXE" ]] || die "Install Trackmania first: ./tm run"
+  command -v 7zz >/dev/null || die "7-Zip missing: brew install sevenzip"
+  say "Installing Openplanet"
+  # shellcheck disable=SC2016  # $PLUGINSDIR is a literal NSIS folder name
+  7zz x -y -o"$(dirname "$GAME_EXE")" "$installer" -x'!$PLUGINSDIR' -x'!OpenplanetUninstall.exe' >>"$LOG" 2>&1 \
+    || die "could not extract $installer"
+  [[ -f "$(dirname "$GAME_EXE")/Openplanet.dll" ]] || die "Openplanet.dll not found in $installer"
+  say "Openplanet installed. Restart the game: ./tm kill && ./tm run, then press F3 in game"
+}
+
 cmd_reset() {
   read -rp "Delete the Wine prefix, including Ubisoft Connect and the game? [y/N] " answer
   [[ "$answer" == y ]] || exit 0
@@ -146,6 +164,8 @@ usage: ./tm <command>
   kill         stop every Wine process
   logs         follow the Wine log (run with WINEDEBUG=err+all for more detail)
   wine <args>  run a command in the prefix, e.g. ./tm wine winecfg
+  openplanet <installer.exe>
+               install Openplanet (download the installer from openplanet.dev)
   reset        delete the prefix (keeps the runtime)
 
 environment:
@@ -160,6 +180,7 @@ case "${1:-}" in
   kill) exec "$WINE_DIR/bin/wineserver" -k ;;
   logs) touch "$LOG" && tail -f "$LOG" ;;
   wine) shift; exec "$WINE" "$@" ;;
+  openplanet) cmd_openplanet "${2:-}" ;;
   reset) cmd_reset ;;
   -h|--help|help) usage ;;
   *) usage >&2; exit 1 ;;
